@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Color Clash</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(to bottom right, #fff3e0, #ffe0b2);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .menu, .game, .records {
+            display: none;
+            text-align: center;
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .menu.active, .game.active, .records.active {
+            display: block;
+        }
+        h1 {
+            color: #ff5722;
+        }
+        button {
+            background-color: #ff8a65;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: scale(1.05);
+            background-color: #f4511e;
+        }
+        .timer {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 1.2em;
+            color: #d81b60;
+        }
+        .boxes {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .box {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="menu active">
+        <h1>Color Clash 🎨</h1>
+        <button onclick="showGame()">Play</button>
+        <button onclick="showRecords()">Past Records</button>
+    </div>
+
+    <div class="game">
+        <h1>Color Clash 🎨</h1>
+        <div class="timer">00:00</div>
+        <div class="boxes" id="colorBoxes"></div>
+        <button onclick="startGame()">Start</button>
+        <button onclick="refreshGame()">Refresh</button>
+        <button onclick="finishGame()">Finish</button>
+    </div>
+
+    <div class="records">
+        <h1>Score 🏆</h1>
+        <p id="highestScore">Highest Score: --:--</p>
+        <div id="recordList"></div>
+        <button onclick="showMenu()">Back</button>
+    </div>
+
+    <script>
+        const colors = ['red', 'blue', 'green', 'yellow', 'purple', 'orange', 'pink', 'cyan'];
+        let timer, seconds = 0, minutes = 0;
+        let records = JSON.parse(localStorage.getItem('colorGameRecords')) || [];
+
+        function showGame() {
+            document.querySelector('.menu').classList.remove('active');
+            document.querySelector('.game').classList.add('active');
+            generateBoxes();
+        }
+
+        function showRecords() {
+            document.querySelector('.menu').classList.remove('active');
+            document.querySelector('.records').classList.add('active');
+            displayRecords();
+        }
+
+        function showMenu() {
+            document.querySelector('.records').classList.remove('active');
+            document.querySelector('.game').classList.remove('active');
+            document.querySelector('.menu').classList.add('active');
+        }
+
+        function generateBoxes() {
+            const boxesDiv = document.getElementById('colorBoxes');
+            boxesDiv.innerHTML = '';
+            for (let i = 0; i < 12; i++) {
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                const text = colors[Math.floor(Math.random() * colors.length)];
+                const box = document.createElement('div');
+                box.className = 'box';
+                box.style.backgroundColor = color;
+                box.style.color = text === color ? colors[(colors.indexOf(color) + 1) % colors.length] : text;
+                box.textContent = text;
+                boxesDiv.appendChild(box);
+            }
+        }
+
+        function startGame() {
+            clearInterval(timer);
+            seconds = 0;
+            minutes = 0;
+            updateTimer();
+            timer = setInterval(() => {
+                seconds++;
+                if (seconds === 60) {
+                    seconds = 0;
+                    minutes++;
+                }
+                updateTimer();
+            }, 1000);
+            generateBoxes();
+        }
+
+        function refreshGame() {
+            clearInterval(timer);
+            startGame();
+        }
+
+        function finishGame() {
+            clearInterval(timer);
+            const time = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            const date = new Date();
+            const record = `[${time}] (${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')})`;
+            records.push(record);
+            localStorage.setItem('colorGameRecords', JSON.stringify(records));
+            showRecords();
+        }
+
+        function updateTimer() {
+            document.querySelector('.timer').textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function displayRecords() {
+            const recordList = document.getElementById('recordList');
+            recordList.innerHTML = records.map(r => `<p>${r}</p>`).join('');
+            const times = records.map(r => {
+                const [min, sec] = r.match(/\d{2}:\d{2}/)[0].split(':');
+                return parseInt(min) * 60 + parseInt(sec);
+            });
+            const highest = times.length ? Math.min(...times) : null;
+            document.getElementById('highestScore').textContent = highest ? `Highest Score: ${Math.floor(highest / 60).toString().padStart(2, '0')}:${(highest % 60).toString().padStart(2, '0')}` : 'Highest Score: --:--';
+        }
+    </script>
+</body>
+</html>
