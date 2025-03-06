@@ -131,10 +131,7 @@
     </div>
 
     <script>
-        const colors = [
-            'red', 'blue', 'green', 'yellow', 'purple', 'orange', 'pink', 'cyan',
-            'lime', 'teal', 'magenta', 'brown', 'violet', 'indigo', 'coral', 'olive'
-        ];
+        const colors = ['red', 'blue', 'green', 'yellow', 'purple', 'orange', 'pink', 'cyan'];
         let timer, seconds = 0, minutes = 0;
         let records = JSON.parse(localStorage.getItem('colorGameRecords')) || [];
 
@@ -160,7 +157,7 @@
         function generateBoxes() {
             const boxesDiv = document.getElementById('colorBoxes');
             boxesDiv.innerHTML = '';
-            for (let i = 0; i < 12; i++) { // 4x3 grid, can expand to 4x4 (16) later
+            for (let i = 0; i < 12; i++) { // 4x3 grid
                 const bgColor = colors[Math.floor(Math.random() * colors.length)];
                 const text = colors[Math.floor(Math.random() * colors.length)];
                 let textColor;
