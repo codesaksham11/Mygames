@@ -20,12 +20,15 @@
             padding: 20px;
             border-radius: 15px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            width: 100%;
         }
         .menu.active, .game.active, .records.active {
             display: block;
         }
         h1 {
             color: #ff5722;
+            margin-bottom: 20px;
         }
         button {
             background-color: #ff8a65;
@@ -44,7 +47,7 @@
         .timer {
             position: absolute;
             top: 10px;
-            right: 10px;
+            right: 20px;
             font-size: 1.2em;
             color: #d81b60;
         }
@@ -52,7 +55,7 @@
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 10px;
-            margin-top: 20px;
+            margin: 20px 0;
         }
         .box {
             width: 60px;
@@ -63,6 +66,28 @@
             border-radius: 8px;
             font-size: 1.1em;
             font-weight: bold;
+            opacity: 0.8; /* Reduced contrast for softer effect */
+        }
+        .color-legend {
+            margin: 20px 0;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        .color-item {
+            display: flex;
+            align-items: center;
+            margin: 5px 0;
+        }
+        .color-box {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+        #scoreDisplay {
+            margin: 20px 0;
+            font-size: 1.5em;
+            color: #ff5722;
         }
     </style>
 </head>
@@ -77,9 +102,11 @@
         <h1>Color Clash 🎨</h1>
         <div class="timer">00:00</div>
         <div class="boxes" id="colorBoxes"></div>
+        <div id="scoreDisplay" style="display: none;">Time: 00:00</div>
         <button onclick="startGame()">Start</button>
         <button onclick="refreshGame()">Refresh</button>
         <button onclick="finishGame()">Finish</button>
+        <div class="color-legend" id="colorLegend"></div>
     </div>
 
     <div class="records">
@@ -98,6 +125,7 @@
             document.querySelector('.menu').classList.remove('active');
             document.querySelector('.game').classList.add('active');
             generateBoxes();
+            updateColorLegend();
         }
 
         function showRecords() {
@@ -115,22 +143,34 @@
         function generateBoxes() {
             const boxesDiv = document.getElementById('colorBoxes');
             boxesDiv.innerHTML = '';
-            for (let i = 0; i < 12; i++) {
-                const color = colors[Math.floor(Math.random() * colors.length)];
+            for (let i = 0; i < 12; i++) { // 4x3 grid, can expand to 4x4 (16) later
+                const bgColor = colors[Math.floor(Math.random() * colors.length)];
                 const text = colors[Math.floor(Math.random() * colors.length)];
+                const textColor = colors[Math.floor(Math.random() * colors.length)]; // Random font color
                 const box = document.createElement('div');
                 box.className = 'box';
-                box.style.backgroundColor = color;
-                box.style.color = text === color ? colors[(colors.indexOf(color) + 1) % colors.length] : text;
+                box.style.backgroundColor = bgColor;
+                box.style.color = textColor; // Apply random text color
                 box.textContent = text;
                 boxesDiv.appendChild(box);
             }
+        }
+
+        function updateColorLegend() {
+            const legendDiv = document.getElementById('colorLegend');
+            legendDiv.innerHTML = colors.map(color => `
+                <div class="color-item">
+                    <div class="color-box" style="background-color: ${color};"></div>
+                    <span>${color}</span>
+                </div>
+            `).join('');
         }
 
         function startGame() {
             clearInterval(timer);
             seconds = 0;
             minutes = 0;
+            document.getElementById('scoreDisplay').style.display = 'none';
             updateTimer();
             timer = setInterval(() => {
                 seconds++;
@@ -151,11 +191,14 @@
         function finishGame() {
             clearInterval(timer);
             const time = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            document.getElementById('scoreDisplay').textContent = `Time: ${time}`;
+            document.getElementById('scoreDisplay').style.display = 'block';
             const date = new Date();
             const record = `[${time}] (${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')})`;
             records.push(record);
             localStorage.setItem('colorGameRecords', JSON.stringify(records));
-            showRecords();
+            // Optionally show records after finish if desired
+            // showRecords();
         }
 
         function updateTimer() {
