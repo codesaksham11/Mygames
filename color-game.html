@@ -44,6 +44,12 @@
             transform: scale(1.05);
             background-color: #f4511e;
         }
+        .back-btn {
+            background-color: #90caf9; /* Softer blue for back button */
+        }
+        .back-btn:hover {
+            background-color: #42a5f5;
+        }
         .reset-btn {
             background-color: #e57373; /* Softer red for reset */
         }
@@ -112,6 +118,7 @@
         <button onclick="startGame()">Start</button>
         <button onclick="refreshGame()">Refresh</button>
         <button onclick="finishGame()">Finish</button>
+        <button class="back-btn" onclick="showMenu()">Back</button>
         <div class="color-legend" id="colorLegend"></div>
     </div>
 
@@ -124,7 +131,10 @@
     </div>
 
     <script>
-        const colors = ['red', 'blue', 'green', 'yellow', 'purple', 'orange', 'pink', 'cyan'];
+        const colors = [
+            'red', 'blue', 'green', 'yellow', 'purple', 'orange', 'pink', 'cyan',
+            'lime', 'teal', 'magenta', 'brown', 'violet', 'indigo', 'coral', 'olive'
+        ];
         let timer, seconds = 0, minutes = 0;
         let records = JSON.parse(localStorage.getItem('colorGameRecords')) || [];
 
@@ -150,17 +160,17 @@
         function generateBoxes() {
             const boxesDiv = document.getElementById('colorBoxes');
             boxesDiv.innerHTML = '';
-            for (let i = 0; i < 12; i++) { // 4x3 grid
+            for (let i = 0; i < 12; i++) { // 4x3 grid, can expand to 4x4 (16) later
                 const bgColor = colors[Math.floor(Math.random() * colors.length)];
-                let text = colors[Math.floor(Math.random() * colors.length)];
+                const text = colors[Math.floor(Math.random() * colors.length)];
                 let textColor;
                 do {
                     textColor = colors[Math.floor(Math.random() * colors.length)];
-                } while (textColor === bgColor); // Ensure text color differs from background
+                } while (textColor === bgColor); // Ensure textColor and bgColor are different
                 const box = document.createElement('div');
                 box.className = 'box';
                 box.style.backgroundColor = bgColor;
-                box.style.color = textColor; // Apply random but different text color
+                box.style.color = textColor; // Apply random text color
                 box.textContent = text;
                 boxesDiv.appendChild(box);
             }
