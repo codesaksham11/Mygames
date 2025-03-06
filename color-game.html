@@ -150,14 +150,17 @@
         function generateBoxes() {
             const boxesDiv = document.getElementById('colorBoxes');
             boxesDiv.innerHTML = '';
-            for (let i = 0; i < 12; i++) { // 4x3 grid, can expand to 4x4 (16) later
+            for (let i = 0; i < 12; i++) { // 4x3 grid
                 const bgColor = colors[Math.floor(Math.random() * colors.length)];
-                const text = colors[Math.floor(Math.random() * colors.length)];
-                const textColor = colors[Math.floor(Math.random() * colors.length)]; // Random font color
+                let text = colors[Math.floor(Math.random() * colors.length)];
+                let textColor;
+                do {
+                    textColor = colors[Math.floor(Math.random() * colors.length)];
+                } while (textColor === bgColor); // Ensure text color differs from background
                 const box = document.createElement('div');
                 box.className = 'box';
                 box.style.backgroundColor = bgColor;
-                box.style.color = textColor; // Apply random text color
+                box.style.color = textColor; // Apply random but different text color
                 box.textContent = text;
                 boxesDiv.appendChild(box);
             }
