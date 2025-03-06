@@ -44,6 +44,12 @@
             transform: scale(1.05);
             background-color: #f4511e;
         }
+        .reset-btn {
+            background-color: #e57373; /* Softer red for reset */
+        }
+        .reset-btn:hover {
+            background-color: #ef5350;
+        }
         .timer {
             position: absolute;
             top: 10px;
@@ -114,6 +120,7 @@
         <p id="highestScore">Highest Score: --:--</p>
         <div id="recordList"></div>
         <button onclick="showMenu()">Back</button>
+        <button class="reset-btn" onclick="resetRecords()">Reset</button>
     </div>
 
     <script>
@@ -197,8 +204,6 @@
             const record = `[${time}] (${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')})`;
             records.push(record);
             localStorage.setItem('colorGameRecords', JSON.stringify(records));
-            // Optionally show records after finish if desired
-            // showRecords();
         }
 
         function updateTimer() {
@@ -214,6 +219,14 @@
             });
             const highest = times.length ? Math.min(...times) : null;
             document.getElementById('highestScore').textContent = highest ? `Highest Score: ${Math.floor(highest / 60).toString().padStart(2, '0')}:${(highest % 60).toString().padStart(2, '0')}` : 'Highest Score: --:--';
+        }
+
+        function resetRecords() {
+            if (confirm('Are you sure you want to reset all records? This cannot be undone!')) {
+                records = [];
+                localStorage.setItem('colorGameRecords', JSON.stringify(records));
+                displayRecords();
+            }
         }
     </script>
 </body>
