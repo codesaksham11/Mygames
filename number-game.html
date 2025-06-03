@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Number Game - Train Your Brain</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+
+        :root {
+            --primary-color: #3498db; /* Calming Blue */
+            --secondary-color: #2ecc71; /* Success Green */
+            --danger-color: #e74c3c; /* Error Red */
+            --light-bg: #ecf0f1; /* Light Gray */
+            --dark-text: #2c3e50; /* Dark Slate Gray */
+            --medium-text: #7f8c8d; /* Silver */
+            --border-color: #bdc3c7; /* Light Silver for borders */
+            --white: #ffffff;
+            --shadow: 0 5px 15px rgba(0,0,0,0.1);
+            --border-radius: 8px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--light-bg);
+            color: var(--dark-text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            background-color: var(--white);
+            padding: 30px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        p.tagline {
+            color: var(--medium-text);
+            margin-bottom: 25px;
+            font-size: 0.9em;
+        }
+
+        .panel {
+            background-color: #f9f9f9; /* Slightly off-white for panels */
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark-text);
+            text-align: left;
+        }
+
+        select, button, input[type="number"].digit-input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1em;
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--white);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        select:focus, button:focus, input[type="number"].digit-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: var(--white);
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+        }
+
+        button:hover {
+            background-color: #2980b9; /* Darker Blue */
+        }
+        
+        button:active {
+            transform: scale(0.98);
+        }
+
+        button#submitBtn {
+            background-color: var(--secondary-color);
+        }
+        button#submitBtn:hover {
+            background-color: #27ae60; /* Darker Green */
+        }
+        button:disabled {
+            background-color: var(--medium-text);
+            cursor: not-allowed;
+        }
+
+
+        #generatedNumberDisplay {
+            font-size: 2.5em;
+            font-weight: 700;
+            letter-spacing: 5px;
+            padding: 15px;
+            margin: 20px 0;
+            background-color: var(--light-bg);
+            border-radius: var(--border-radius);
+            color: var(--primary-color);
+            min-height: 60px; /* Ensure space even when empty */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #inputArea {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        input[type="number"].digit-input {
+            width: 50px; /* Fixed width for digit inputs */
+            height: 50px;
+            text-align: center;
+            font-size: 1.5em;
+            font-weight: 600;
+            /* Hide spinner buttons for number input */
+            -moz-appearance: textfield;
+        }
+        input[type="number"].digit-input::-webkit-outer-spin-button,
+        input[type="number"].digit-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+
+        #resultDisplay {
+            font-size: 1.2em;
+            font-weight: 600;
+            padding: 10px;
+            margin-top: 15px;
+            border-radius: var(--border-radius);
+            min-height: 40px;
+        }
+        #resultDisplay.correct {
+            background-color: #d4edda; /* Light Green */
+            color: #155724;  /* Dark Green text */
+            border: 1px solid #c3e6cb;
+        }
+        #resultDisplay.wrong {
+            background-color: #f8d7da; /* Light Red */
+            color: #721c24;  /* Dark Red text */
+            border: 1px solid #f5c6cb;
+        }
+
+        .settings-group, .operation-group {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end; /* Align items to bottom if labels make them uneven */
+        }
+        .settings-group > div, .operation-group > div {
+            flex-grow: 1; /* Allow items to grow */
+        }
+         .settings-group button {
+            flex-shrink: 0; /* Prevent button from shrinking */
+            width: auto; /* Auto width for button or specific width */
+            padding: 12px 20px;
+        }
+
+        .stats-panel {
+            margin-top: 25px;
+            padding: 15px;
+            background-color: #f0f3f4;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+        }
+        .stats-panel h3 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+        .stats-panel p {
+            font-size: 0.95em;
+            color: var(--dark-text);
+            margin-bottom: 5px;
+        }
+
+        /* Device Compatibility Tweaks */
+        @media (max-width: 480px) {
+            .container {
+                padding: 20px;
+            }
+            #generatedNumberDisplay {
+                font-size: 2em;
+                letter-spacing: 3px;
+            }
+            input[type="number"].digit-input {
+                width: 40px;
+                height: 40px;
+                font-size: 1.2em;
+            }
+            .settings-group, .operation-group {
+                flex-direction: column;
+                align-items: stretch; /* Stretch items to full width */
+            }
+             .settings-group button {
+                width: 100%;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Number Transformation</h1>
+        <p class="tagline">Challenge your mental arithmetic!</p>
+
+        <div class="panel setup-panel">
+            <div class="settings-group">
+                <div>
+                    <label for="numDigits">Select Number of Digits:</label>
+                    <select id="numDigits">
+                        <option value="2">2 Digits</option>
+                        <option value="3">3 Digits</option>
+                        <option value="4" selected>4 Digits</option>
+                        <option value="5">5 Digits</option>
+                        <option value="6">6 Digits</option>
+                        <option value="7">7 Digits</option>
+                        <option value="8">8 Digits</option>
+                        <option value="9">9 Digits</option>
+                    </select>
+                </div>
+                <button id="generateBtn">Generate Number</button>
+            </div>
+        </div>
+
+        <div id="generatedNumberDisplay">-- -- -- --</div>
+
+        <div class="panel game-panel" style="display: none;"> <!-- Initially hidden -->
+            <div class="operation-group">
+                <div>
+                    <label for="operationType">Operation Type:</label>
+                    <select id="operationType">
+                        <option value="+" selected>+</option>
+                        <option value="-" >-</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="operationValue">Operation Value (1-9):</label>
+                    <select id="operationValue">
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5" selected>5</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                        <option value="8">8</option>
+                        <option value="9">9</option>
+                    </select>
+                </div>
+            </div>
+
+            <label for="inputArea" style="margin-top: 20px;">Enter Your Transformed Number:</label>
+            <div id="inputArea">
+                <!-- Input boxes will be generated here by JS -->
+            </div>
+            <button id="submitBtn" disabled>Submit Answer</button>
+            <div id="resultDisplay"></div>
+        </div>
+
+        <div class="stats-panel">
+            <h3>Your Stats</h3>
+            <p>Attempts: <span id="statAttempts">0</span></p>
+            <p>Correct: <span id="statCorrect">0</span></p>
+            <p>Accuracy: <span id="statAccuracy">0%</span></p>
+        </div>
+
+    </div>
+
+    <script>
+        const numDigitsSelect = document.getElementById('numDigits');
+        const generateBtn = document.getElementById('generateBtn');
+        const generatedNumberDisplay = document.getElementById('generatedNumberDisplay');
+        
+        const gamePanel = document.querySelector('.game-panel');
+        const operationTypeSelect = document.getElementById('operationType');
+        const operationValueSelect = document.getElementById('operationValue');
+        const inputArea = document.getElementById('inputArea');
+        const submitBtn = document.getElementById('submitBtn');
+        const resultDisplay = document.getElementById('resultDisplay');
+
+        const statAttemptsEl = document.getElementById('statAttempts');
+        const statCorrectEl = document.getElementById('statCorrect');
+        const statAccuracyEl = document.getElementById('statAccuracy');
+
+        let currentGeneratedNumber = "";
+        let selectedNumDigits = 4; // Default
+        let stats = {
+            attempts: 0,
+            correct: 0,
+        };
+
+        function updateStatsDisplay() {
+            statAttemptsEl.textContent = stats.attempts;
+            statCorrectEl.textContent = stats.correct;
+            const accuracy = stats.attempts > 0 ? ((stats.correct / stats.attempts) * 100).toFixed(1) : 0;
+            statAccuracyEl.textContent = `${accuracy}%`;
+        }
+        
+        function generateRandomNumber(length) {
+            let number = "";
+            for (let i = 0; i < length; i++) {
+                number += Math.floor(Math.random() * 10); // Digits 0-9
+            }
+            return number;
+        }
+
+        function createInputBoxes(count) {
+            inputArea.innerHTML = ''; // Clear previous inputs
+            for (let i = 0; i < count; i++) {
+                const input = document.createElement('input');
+                input.type = 'number';
+                input.className = 'digit-input';
+                input.min = '0';
+                input.max = '9';
+                input.maxLength = 1; // Although type=number might ignore this
+                input.required = true;
+                // Auto-tab to next input
+                input.addEventListener('input', (e) => {
+                    // Ensure only one digit
+                    if (e.target.value.length > 1) {
+                        e.target.value = e.target.value.slice(0,1);
+                    }
+                    if (e.target.value && e.target.nextElementSibling && e.target.nextElementSibling.tagName === 'INPUT') {
+                        e.target.nextElementSibling.focus();
+                    }
+                });
+                // Allow backspace to go to previous input
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Backspace' && !e.target.value && e.target.previousElementSibling && e.target.previousElementSibling.tagName === 'INPUT') {
+                        e.target.previousElementSibling.focus();
+                    }
+                });
+                inputArea.appendChild(input);
+            }
+        }
+
+        generateBtn.addEventListener('click', () => {
+            selectedNumDigits = parseInt(numDigitsSelect.value);
+            currentGeneratedNumber = generateRandomNumber(selectedNumDigits);
+            generatedNumberDisplay.textContent = currentGeneratedNumber.split('').join(' '); // Add space for readability
+            
+            createInputBoxes(selectedNumDigits);
+            
+            resultDisplay.textContent = '';
+            resultDisplay.className = '';
+            submitBtn.disabled = false;
+            gamePanel.style.display = 'block'; // Show the game panel
+
+            // Focus the first input box
+            if (inputArea.firstChild) {
+                inputArea.firstChild.focus();
+            }
+        });
+
+        submitBtn.addEventListener('click', () => {
+            const digitInputs = inputArea.querySelectorAll('.digit-input');
+            let userAnswer = "";
+            let allFilled = true;
+            digitInputs.forEach(input => {
+                if (input.value === '' || isNaN(parseInt(input.value))) {
+                    allFilled = false;
+                }
+                userAnswer += input.value;
+            });
+
+            if (!allFilled || userAnswer.length !== selectedNumDigits) {
+                resultDisplay.textContent = "Please fill all digit boxes correctly.";
+                resultDisplay.className = 'wrong';
+                return;
+            }
+
+            const operation = operationTypeSelect.value;
+            const opValue = parseInt(operationValueSelect.value);
+            let expectedAnswer = "";
+
+            for (let i = 0; i < currentGeneratedNumber.length; i++) {
+                let digit = parseInt(currentGeneratedNumber[i]);
+                let resultDigit;
+                if (operation === '+') {
+                    resultDigit = (digit + opValue) % 10;
+                } else { // operation === '-'
+                    resultDigit = (digit - opValue + 10) % 10; // +10 ensures positive before modulo for negative results
+                }
+                expectedAnswer += resultDigit;
+            }
+            
+            stats.attempts++;
+            if (userAnswer === expectedAnswer) {
+                resultDisplay.textContent = "Correct! Well done!";
+                resultDisplay.className = 'correct';
+                stats.correct++;
+            } else {
+                resultDisplay.textContent = `Incorrect. Expected: ${expectedAnswer.split('').join(' ')}`;
+                resultDisplay.className = 'wrong';
+            }
+            updateStatsDisplay();
+            // Optionally, disable submit again until next generation or clear inputs
+            // submitBtn.disabled = true; 
+        });
+        
+        // Initialize
+        numDigitsSelect.value = selectedNumDigits.toString(); // Set default select value
+        updateStatsDisplay(); // Show initial stats
+        // Set placeholder for generated number display based on default digit selection
+        generatedNumberDisplay.textContent = Array(selectedNumDigits).fill('-').join(' ');
+    </script>
+</body>
+</html>
