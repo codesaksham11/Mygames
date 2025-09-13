@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Numeric Sequence Trainer</title>
+    <style>
+        :root {
+            --background-color: #1a1a1a;
+            --grid-background: #2c2c2c;
+            --tile-color: #444;
+            --text-color: #f0f0f0;
+            --primary-color: #00aaff;
+            --correct-color: #00cc66;
+            --incorrect-color: #ff3333;
+            --secondary-color: #333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+            touch-action: manipulation;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            text-align: center;
+        }
+
+        .settings, .game-info {
+            background-color: var(--secondary-color);
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .setting {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .setting label, .info-item label {
+            margin-bottom: 5px;
+            font-size: 0.9em;
+            color: #ccc;
+        }
+
+        .setting select {
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid var(--primary-color);
+            background-color: var(--grid-background);
+            color: var(--text-color);
+        }
+
+        .info-item {
+            text-align: center;
+        }
+
+        .info-item span {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        
+        #mistakes span {
+            color: var(--incorrect-color);
+        }
+
+        button {
+            padding: 10px 20px;
+            border-radius: 5px;
+            border: none;
+            background-color: var(--primary-color);
+            color: var(--background-color);
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #0088cc;
+        }
+        
+        button:disabled {
+            background-color: #555;
+            cursor: not-allowed;
+        }
+
+        #grid-container {
+            display: grid;
+            gap: 5px;
+            background-color: var(--grid-background);
+            padding: 10px;
+            border-radius: 10px;
+            margin-top: 10px;
+        }
+
+        .tile {
+            width: 60px;
+            height: 60px;
+            background-color: var(--tile-color);
+            border-radius: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5em;
+            font-weight: bold;
+            cursor: pointer;
+            user-select: none;
+            transition: transform 0.1s, background-color 0.2s;
+        }
+        
+        .tile:active {
+            transform: scale(0.95);
+        }
+
+        .tile.correct {
+            background-color: var(--correct-color);
+            color: var(--background-color);
+            opacity: 0.7;
+            cursor: default;
+        }
+        
+        .tile.incorrect {
+            animation: shake 0.3s;
+            background-color: var(--incorrect-color);
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .history {
+            margin-top: 30px;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .history h2 {
+            text-align: center;
+            color: var(--primary-color);
+        }
+
+        #history-log {
+            list-style-type: none;
+            padding: 0;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        #history-log li {
+            background-color: var(--secondary-color);
+            margin-bottom: 10px;
+            padding: 15px;
+            border-radius: 5px;
+        }
+
+        @media (max-width: 600px) {
+            .tile {
+                width: 50px;
+                height: 50px;
+                font-size: 1.2em;
+            }
+             .info-item span {
+                font-size: 1.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Numeric Sequence Trainer</h1>
+
+    <div class="settings">
+        <div class="setting">
+            <label for="grid-size">Grid Size:</label>
+            <select id="grid-size">
+                <option value="3">3x3 (1-9)</option>
+                <option value="4">4x4 (1-16)</option>
+                <option value="5" selected>5x5 (1-25)</option>
+                <option value="6">6x6 (1-36)</option>
+            </select>
+        </div>
+        <button id="start-btn">Start Game</button>
+    </div>
+    
+    <div class="game-info">
+        <div class="info-item">
+            <label>Time</label>
+            <span id="timer">0.00</span>
+        </div>
+        <div class="info-item">
+            <label>Find</label>
+            <span id="next-number">-</span>
+        </div>
+        <div class="info-item" id="mistakes">
+            <label>Mistakes</label>
+            <span>0 / 3</span>
+        </div>
+    </div>
+
+    <div id="grid-container"></div>
+
+    <div class="history">
+        <h2>Game History</h2>
+        <ul id="history-log"></ul>
+        <button id="clear-history-btn">Clear History</button>
+    </div>
+
+    <script>
+        const gridContainer = document.getElementById('grid-container');
+        const startBtn = document.getElementById('start-btn');
+        const timerDisplay = document.getElementById('timer');
+        const nextNumberDisplay = document.getElementById('next-number');
+        const mistakesDisplay = document.querySelector('#mistakes span');
+        const gridSizeSelect = document.getElementById('grid-size');
+        const historyLog = document.getElementById('history-log');
+        const clearHistoryBtn = document.getElementById('clear-history-btn');
+
+        let gameActive = false;
+        let currentNumber = 1;
+        let mistakes = 0;
+        let startTime;
+        let timerInterval;
+        let gridSize;
+        const MAX_MISTAKES = 3;
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function createGrid() {
+            gridContainer.innerHTML = '';
+            gridSize = parseInt(gridSizeSelect.value);
+            const totalTiles = gridSize * gridSize;
+            
+            let numbers = Array.from({ length: totalTiles }, (_, i) => i + 1);
+            numbers = shuffleArray(numbers);
+
+            gridContainer.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+
+            numbers.forEach(num => {
+                const tile = document.createElement('div');
+                tile.classList.add('tile');
+                tile.textContent = num;
+                tile.addEventListener('click', handleTileClick);
+                gridContainer.appendChild(tile);
+            });
+        }
+        
+        function handleTileClick(e) {
+            if (!gameActive) return;
+
+            const tile = e.target;
+            const clickedNumber = parseInt(tile.textContent);
+
+            if (tile.classList.contains('correct')) return;
+
+            if (clickedNumber === currentNumber) {
+                tile.classList.add('correct');
+                currentNumber++;
+                
+                if (currentNumber > gridSize * gridSize) {
+                    endGame(true); // Win
+                } else {
+                    nextNumberDisplay.textContent = currentNumber;
+                }
+            } else {
+                mistakes++;
+                mistakesDisplay.textContent = `${mistakes} / ${MAX_MISTAKES}`;
+                tile.classList.add('incorrect');
+                setTimeout(() => tile.classList.remove('incorrect'), 300);
+                
+                if (mistakes >= MAX_MISTAKES) {
+                    endGame(false); // Lose
+                }
+            }
+        }
+
+        function updateTimer() {
+            const elapsedTime = (performance.now() - startTime) / 1000;
+            timerDisplay.textContent = elapsedTime.toFixed(2);
+        }
+
+        function startGame() {
+            gameActive = true;
+            currentNumber = 1;
+            mistakes = 0;
+            
+            startBtn.disabled = true;
+            gridSizeSelect.disabled = true;
+
+            mistakesDisplay.textContent = `0 / ${MAX_MISTAKES}`;
+            nextNumberDisplay.textContent = '1';
+            
+            createGrid();
+            
+            startTime = performance.now();
+            timerInterval = setInterval(updateTimer, 50);
+        }
+
+        function endGame(isWin) {
+            gameActive = false;
+            clearInterval(timerInterval);
+            startBtn.disabled = false;
+            gridSizeSelect.disabled = false;
+            
+            if (isWin) {
+                const finalTime = parseFloat(timerDisplay.textContent);
+                nextNumberDisplay.textContent = '🏆';
+                saveGameStats({
+                    time: finalTime,
+                    grid: `${gridSize}x${gridSize}`,
+                    date: new Date().toLocaleString()
+                });
+                loadHistory();
+            } else {
+                nextNumberDisplay.textContent = 'X';
+                // Highlight the correct next tile for learning
+                const allTiles = document.querySelectorAll('.tile');
+                allTiles.forEach(tile => {
+                    if(parseInt(tile.textContent) === currentNumber) {
+                        tile.style.backgroundColor = 'var(--primary-color)';
+                        tile.style.transform = 'scale(1.1)';
+                    }
+                });
+            }
+        }
+
+        function saveGameStats(stats) {
+            const history = JSON.parse(localStorage.getItem('sequenceGameHistory')) || [];
+            history.unshift(stats); // Add new record to the top
+            localStorage.setItem('sequenceGameHistory', JSON.stringify(history));
+        }
+
+        function loadHistory() {
+            historyLog.innerHTML = '';
+            const history = JSON.parse(localStorage.getItem('sequenceGameHistory')) || [];
+            history.forEach(stat => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <strong>${stat.date}</strong><br>
+                    Completed ${stat.grid} grid in <strong>${stat.time.toFixed(2)}s</strong>
+                `;
+                historyLog.appendChild(li);
+            });
+        }
+
+        function clearHistory() {
+            localStorage.removeItem('sequenceGameHistory');
+            loadHistory();
+        }
+
+        startBtn.addEventListener('click', startGame);
+        clearHistoryBtn.addEventListener('click', clearHistory);
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadHistory();
+            createGrid(); // Create a preview grid on load
+        });
+    </script>
+</body>
+</html>
