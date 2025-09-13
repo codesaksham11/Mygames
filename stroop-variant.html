@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Reaction Time Trainer</title>
+    <style>
+        :root {
+            --background-color: #1a1a1a;
+            --grid-background: #2c2c2c;
+            --tile-color: #444;
+            --glow-color: #00ffcc;
+            --clicked-color: #008066;
+            --text-color: #f0f0f0;
+            --primary-color: #00ffcc;
+            --secondary-color: #333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+            touch-action: manipulation;
+        }
+
+        h1 {
+            color: var(--primary-color);
+        }
+
+        .settings {
+            background-color: var(--secondary-color);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        .setting {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .setting label {
+            margin-bottom: 5px;
+        }
+
+        .setting input {
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid var(--primary-color);
+            background-color: var(--grid-background);
+            color: var(--text-color);
+            width: 80px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border-radius: 5px;
+            border: none;
+            background-color: var(--primary-color);
+            color: var(--background-color);
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #00cca3;
+        }
+
+        button:disabled {
+            background-color: #555;
+            cursor: not-allowed;
+        }
+
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #grid-container {
+            display: grid;
+            gap: 5px;
+            background-color: var(--grid-background);
+            padding: 10px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .tile {
+            width: 50px;
+            height: 50px;
+            background-color: var(--tile-color);
+            border-radius: 5px;
+            transition: background-color 0.1s;
+        }
+
+        .tile.glow {
+            background-color: var(--glow-color);
+            box-shadow: 0 0 10px var(--glow-color);
+        }
+
+        .tile.clicked {
+            background-color: var(--clicked-color);
+        }
+
+        #timer {
+            font-size: 2em;
+            margin-top: 10px;
+            color: var(--primary-color);
+        }
+
+        .history {
+            margin-top: 30px;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .history h2 {
+            text-align: center;
+            color: var(--primary-color);
+        }
+
+        #history-log {
+            list-style-type: none;
+            padding: 0;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        #history-log li {
+            background-color: var(--secondary-color);
+            margin-bottom: 10px;
+            padding: 15px;
+            border-radius: 5px;
+        }
+
+        @media (max-width: 600px) {
+            .tile {
+                width: 40px;
+                height: 40px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Peripheral Vision & Reaction Trainer</h1>
+
+    <div class="settings">
+        <div class="setting">
+            <label for="grid-rows">Grid Rows:</label>
+            <input type="number" id="grid-rows" value="5" min="2" max="10">
+        </div>
+        <div class="setting">
+            <label for="grid-cols">Grid Cols:</label>
+            <input type="number" id="grid-cols" value="5" min="2" max="10">
+        </div>
+        <div class="setting">
+            <label for="glowing-tiles">Glowing Tiles:</label>
+            <input type="number" id="glowing-tiles" value="1" min="1" max="5">
+        </div>
+        <div class="setting">
+            <label for="game-duration">Duration (s):</label>
+            <input type="number" id="game-duration" value="30" min="10" max="120">
+        </div>
+        <button id="start-btn">Start Game</button>
+    </div>
+
+    <div class="game-container">
+        <div id="grid-container"></div>
+        <div id="timer">0s</div>
+    </div>
+
+    <div class="history">
+        <h2>Game History</h2>
+        <ul id="history-log"></ul>
+        <button id="clear-history-btn">Clear History</button>
+    </div>
+
+    <script>
+        const gridContainer = document.getElementById('grid-container');
+        const startBtn = document.getElementById('start-btn');
+        const timerDisplay = document.getElementById('timer');
+        const historyLog = document.getElementById('history-log');
+        const clearHistoryBtn = document.getElementById('clear-history-btn');
+
+        let gridRows, gridCols, numGlowing, gameDuration;
+        let tiles = [];
+        let gameInProgress = false;
+        let reactionTimes = [];
+        let glowStartTime;
+        let gameTimerInterval;
+
+        function createGrid() {
+            gridContainer.innerHTML = '';
+            tiles = [];
+            gridRows = parseInt(document.getElementById('grid-rows').value);
+            gridCols = parseInt(document.getElementById('grid-cols').value);
+            numGlowing = parseInt(document.getElementById('glowing-tiles').value);
+
+            gridContainer.style.gridTemplateColumns = `repeat(${gridCols}, 1fr)`;
+            gridContainer.style.gridTemplateRows = `repeat(${gridRows}, 1fr)`;
+
+            for (let i = 0; i < gridRows * gridCols; i++) {
+                const tile = document.createElement('div');
+                tile.classList.add('tile');
+                tile.dataset.index = i;
+                tile.addEventListener('touchstart', handleTouch);
+                tile.addEventListener('mousedown', handleTouch);
+                gridContainer.appendChild(tile);
+                tiles.push(tile);
+            }
+        }
+
+        function handleTouch(e) {
+            e.preventDefault();
+            if (!gameInProgress) return;
+            
+            const touchedTiles = e.targetTouches ? Array.from(e.targetTouches).map(t => t.target) : [e.target];
+
+            touchedTiles.forEach(tile => {
+                if (tile.classList.contains('glow')) {
+                    const reactionTime = performance.now() - glowStartTime;
+                    reactionTimes.push(reactionTime);
+                    tile.classList.remove('glow');
+                    tile.classList.add('clicked');
+                    setTimeout(() => tile.classList.remove('clicked'), 200);
+
+                    const remainingGlows = document.querySelectorAll('.tile.glow').length;
+                    if (remainingGlows === 0) {
+                        glowRandomTiles();
+                    }
+                }
+            });
+        }
+
+        function glowRandomTiles() {
+            if (!gameInProgress) return;
+
+            const delay = Math.random() * 1500 + 500; // Random delay between 0.5 and 2 seconds
+            setTimeout(() => {
+                if (!gameInProgress) return;
+
+                const availableTiles = tiles.filter(tile => !tile.classList.contains('glow'));
+                for (let i = 0; i < numGlowing && availableTiles.length > 0; i++) {
+                    const randomIndex = Math.floor(Math.random() * availableTiles.length);
+                    const tileToGlow = availableTiles.splice(randomIndex, 1)[0];
+                    tileToGlow.classList.add('glow');
+                }
+                glowStartTime = performance.now();
+            }, delay);
+        }
+
+        function startGame() {
+            gameInProgress = true;
+            startBtn.disabled = true;
+            reactionTimes = [];
+            createGrid();
+
+            gameDuration = parseInt(document.getElementById('game-duration').value);
+            let timeLeft = gameDuration;
+            timerDisplay.textContent = `${timeLeft}s`;
+
+            gameTimerInterval = setInterval(() => {
+                timeLeft--;
+                timerDisplay.textContent = `${timeLeft}s`;
+                if (timeLeft <= 0) {
+                    endGame();
+                }
+            }, 1000);
+
+            glowRandomTiles();
+        }
+
+        function endGame() {
+            clearInterval(gameTimerInterval);
+            gameInProgress = false;
+            startBtn.disabled = false;
+            timerDisplay.textContent = 'Game Over!';
+
+            tiles.forEach(tile => tile.classList.remove('glow'));
+
+            if (reactionTimes.length > 0) {
+                const avgTime = reactionTimes.reduce((a, b) => a + b, 0) / reactionTimes.length;
+                const minTime = Math.min(...reactionTimes);
+                const maxTime = Math.max(...reactionTimes);
+                saveGameStats({
+                    avg: avgTime.toFixed(2),
+                    min: minTime.toFixed(2),
+                    max: maxTime.toFixed(2),
+                    date: new Date().toLocaleString()
+                });
+                loadHistory();
+            }
+        }
+        
+        function saveGameStats(stats) {
+            const history = JSON.parse(localStorage.getItem('reactionGameHistory')) || [];
+            history.unshift(stats);
+            localStorage.setItem('reactionGameHistory', JSON.stringify(history));
+        }
+
+        function loadHistory() {
+            historyLog.innerHTML = '';
+            const history = JSON.parse(localStorage.getItem('reactionGameHistory')) || [];
+            history.forEach(stat => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <strong>${stat.date}</strong><br>
+                    Avg: ${stat.avg}ms | Min: ${stat.min}ms | Max: ${stat.max}ms
+                `;
+                historyLog.appendChild(li);
+            });
+        }
+
+        function clearHistory() {
+            localStorage.removeItem('reactionGameHistory');
+            loadHistory();
+        }
+        
+        startBtn.addEventListener('click', startGame);
+        clearHistoryBtn.addEventListener('click', clearHistory);
+
+        document.addEventListener('DOMContentLoaded', () => {
+            createGrid();
+            loadHistory();
+        });
+    </script>
+</body>
+</html>
